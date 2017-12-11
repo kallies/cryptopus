@@ -49,6 +49,11 @@ class LdapConnection
     raise "No uidnumber for uid #{username}"
   end
 
+  def test_connection(hostname)
+    @ldap_host = hostname
+    connection.bind ? true : false
+  end
+
   private
 
   attr_reader :settings

@@ -10,30 +10,15 @@ class app.TestLdapConnection
   constructor: () ->
     bind.call()
 
-  test_ldap_connection = (url, settings) ->
+  test_ldap_connection = (url) ->
     $.ajax({
-      type: "PATCH",
+      type: "GET",
       url: url,
-      data: {settings},
     })
-
-  ldap_settings = () ->
-    settings = {}
-    keys = ['host-list',
-            'portnumber',
-            'encryption']
-    for key in keys
-      do ->
-        if key == 'host-list'
-          settings[key] = $("#" + key).val()
-        else
-          settings[key] = $("#setting_ldap_" + key).val()
-    settings
 
   bind = ->
     $(document).on 'click', '#ldap-button', ->
-      settings = ldap_settings()
-      url = '/api/admin/settings/test_ldap_connection'
-      test_ldap_connection(url, settings)
+      url = '/api/admin/ldap_connection_test/new'
+      test_ldap_connection(url)
 
   new TestLdapConnection
