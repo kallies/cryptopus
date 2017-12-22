@@ -15,29 +15,55 @@ class Admin::MaintenanceTasksController < Admin::AdminController
 
   # GET /admin/maintenance_tasks/1/prepare
   def prepare
-    task = MaintenanceTask::TASKS[params[:id].to_i]
-    @maintenance_task = MaintenanceTask.constantize_class(task)
-    flash[:notice] = @maintenance_task.hint
+    unless maintenance_task.prepare?
+      raise ActionController::RoutingError.new('Not Found')
+    end
+
+    flash[:notice] = maintenance_task.hint
+    flash[:error] = maintenance_task.error
   end
 
   # POST /admin/maintenance_tasks/1/execute
   def execute
-    param_values = { private_key: session[:private_key] }
+    unless maintenance_task
+      raise ActionController::RoutingError.new('Not Found')
+    end
 
-    param_values.merge!(task_params)
-    task = MaintenanceTask.initialize_task(params[:id], current_user, param_values)
+    maintenance_task.current_user = current_user
+    maintenance_task.param_values = param_values
 
-    if task.execute
+    result = maintenance_task.execute
+
+    if result
       flash[:notice] = t('flashes.admin.maintenance_tasks.succeed')
     else
       flash[:error] = t('flashes.admin.maintenance_tasks.failed')
     end
-    redirect_to admin_maintenance_tasks_path
+
+    if result && template_exists?(partial)
+      render partial
+    else
+      redirect_to admin_maintenance_tasks_path
+    end
   end
 
   private
 
+  def partial
+    "admin/maintenance_tasks/#{maintenance_task.name}/result.html.haml"
+  end
+
+  def maintenance_task
+    @maintenance_task ||= MaintenanceTask.find(params[:id])
+  end
+
+  def param_values
+    param_values = { private_key: session[:private_key] }
+    param_values.merge!(task_params)
+  end
+
   def task_params
+    return {} unless params[:task_params]
     params.require(:task_params).
       permit(:new_root_password, :retype_password, :root_password)
   end

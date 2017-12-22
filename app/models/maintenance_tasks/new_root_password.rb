@@ -6,6 +6,7 @@
 #  https://github.com/puzzle/cryptopus.
 
 class MaintenanceTasks::NewRootPassword < MaintenanceTask
+  self.id = 2
   self.label = 'New root password'
   self.description = 'Sets a new root password.'
   self.hint = 'WARNING! If you reset the root-password, all private
@@ -15,7 +16,7 @@ class MaintenanceTasks::NewRootPassword < MaintenanceTask
 
   def execute
     super do
-      raise 'Only admins can run this Task' unless @current_user.admin?
+      raise 'Only admins can run this Task' unless current_user.admin?
 
       check_passwords
       reset_password
@@ -25,12 +26,12 @@ class MaintenanceTasks::NewRootPassword < MaintenanceTask
   private
 
   def reset_password
-    admin = @current_user
+    admin = current_user
     root = User.root
 
     root.password = CryptUtils.one_way_crypt(new_root_password)
     root.create_keypair new_root_password
-    root.save
+    root.save!
     recrypt_passwords(root, admin, @param_values[:private_key])
   end
 
